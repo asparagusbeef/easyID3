@@ -1,7 +1,7 @@
 # easyID3
 Simple and easy to use ID3 tree build and print
 
-requires pandas, math, numpy and colorama.
+requires pandas, math and numpy
 Easy textual print of ID3 for any number of possible answers. 
 Supports dataframes with only categorical data (strings only, case-sensitive).
 Will also clean data of perfectly unique columns (such as an index column).
