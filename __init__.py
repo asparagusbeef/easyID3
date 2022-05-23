@@ -1,7 +1,6 @@
 import pandas as pd
 import math
 import numpy as np
-from colorama import Fore, Back, Style
 
 class Node:
     def __init__(self):
@@ -14,6 +13,7 @@ class Node:
         self.countAns = {}
 
 def __orderdata__(data, answerCol):
+    data = data.astype("str")
     for col in data.columns:
         if len(data[col]) == len(pd.unique(data[col])):
             data = data.drop(col, axis = 1)
@@ -42,6 +42,7 @@ def __info_gain__(data, feature, answerCol):
     return gain
 
 def __id3_bg__(data, features, answerCol):
+    answers = data[answerCol].unique()
     root = Node()
 
     max_gain = 0
@@ -62,7 +63,7 @@ def __id3_bg__(data, features, answerCol):
                 newNode.value = u
                 newNode.pred = np.unique(subdata[answerCol])
                 newNode.answerCol = answerCol
-                newNode.pred_id = np.where(data[answerCol].unique()==newNode.pred)[0][0]
+                newNode.pred_id = np.where(np.sort(answers)==newNode.pred[0])[0][0]
                 root.children.append(newNode)
             else:
                 dummyNode = Node()
@@ -85,27 +86,27 @@ def ID3(data, answerCol):
     return __id3_bg__(data, features, answerCol)
 
 def printTree(root: Node, depth=0):
-    Bold, Underline='\033[1m', '\033[4m'
-    treeColors = [(Fore.BLACK, Back.CYAN),(Fore.WHITE, Back.MAGENTA),(Fore.WHITE,Back.BLUE),(Fore.BLACK,Back.YELLOW)]
-    ansColors = [(Fore.BLACK, Back.GREEN),(Fore.WHITE, Back.RED)]
+    treeColors = [('\x1b[30m', '\x1b[46m'), ('\x1b[37m', '\x1b[45m'), 
+                  ('\x1b[37m', '\x1b[44m'), ('\x1b[30m', '\x1b[43m')]
+    ansColors = [('\x1b[37m', '\x1b[41m'), ('\x1b[30m', '\x1b[42m')]
+    Bold, Underline = '\033[1m', '\033[4m'
+    ForeWHITE, BackBLACK = '\x1b[37m', '\x1b[40m'
+    StyleRESET_ALL = '\x1b[0m'
     n=0
     while root != None and n<1:
         for i in range(depth):
             print("\t", end="")
         print(f'{treeColors[depth%len(treeColors)][0]}'+
-              f'{treeColors[depth%len(treeColors)][1]}'+root.value+f'{Style.RESET_ALL}', end="")
+              f'{treeColors[depth%len(treeColors)][1]}'+root.value+f'{StyleRESET_ALL}', end="")
         if root.isLeaf:
             print(" -> ", f'{Bold}{Underline}{ansColors[root.pred_id%len(ansColors)][0]}{ansColors[root.pred_id%len(ansColors)][1]}'
-                  +'['+f'{root.answerCol}'+': '+f'{root.pred[0]}'+']'+f'{Style.RESET_ALL}')
+                  +'['+f'{root.answerCol}'+': '+f'{root.pred[0]}'+']'+f'{StyleRESET_ALL}')
 
         else:
             if root.children == [None]:
-                print(" -> ", f'{Bold}{Underline}{Fore.WHITE}{Back.BLACK}'+"Uncertain"+" "
-                      +f'{root.countAns}'+f'{Style.RESET_ALL}')
+                print(" -> ", f'{Bold}{Underline}{ForeWHITE}{BackBLACK}'+"Uncertain"+" "
+                      +f'{dict(sorted(root.countAns.items()))}'+f'{StyleRESET_ALL}')
         print()
         for child in root.children:
             printTree(child, depth + 1)
         n += 1
-        
-        
-        
