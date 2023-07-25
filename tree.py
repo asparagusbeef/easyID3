@@ -1,7 +1,7 @@
 import pandas as pd
 import math
 import numpy as np
-from node import Node
+from .node import Node
 
 class ID3DecisionTreeClassifier:
     def __init__(self):

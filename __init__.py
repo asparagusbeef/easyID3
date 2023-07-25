@@ -1,1 +1,1 @@
-from tree import ID3DecisionTreeClassifier
+from .tree import ID3DecisionTreeClassifier
