@@ -1,3 +1,9 @@
-dist/
+__pycache__
+*.py[cod]
 *.egg-info/
+dist/
 build/
+.git
+*.pyc
+*.pyo
+*.pyd
