@@ -7,81 +7,82 @@ class ID3DecisionTreeClassifier:
     def __init__(self):
         self.root = None
 
-    def _preprocess_data(self, data, answer_col):
+    def _preprocess_data(self, X, y):
         """
         Order the data after removing columns with unique values.
 
         Args:
-            data (DataFrame): input DataFrame.
-            answer_col (str): the column to be excluded from feature set.
+            X (DataFrame): input DataFrame.
+            y (Series): the column to be excluded from feature set.
 
         Returns:
             Tuple[DataFrame, List[str]]: The ordered DataFrame and a list of features.
         """
+        data = pd.concat([X, y], axis=1)
         data = data.astype('str')
-        for col in data.columns:
+        for col in X.columns:
             if len(data[col]) == len(pd.unique(data[col])):
                 data = data.drop(col, axis=1)
-        features = [feat for feat in data.columns if feat != answer_col]
+        features = [feat for feat in data.columns if feat != y.name]
         return data, features
 
-    def _calculate_entropy(self, data, answer_column):
+    def _calculate_entropy(self, data, target):
         """
         Calculate the entropy of the given data based on the answer column.
 
         Args:
             data (DataFrame): The input DataFrame.
-            answer_column (str): The column in the DataFrame to calculate entropy for.
+            target (str): The column in the DataFrame to calculate entropy for.
 
         Returns:
             float: The calculated entropy.
         """
-        answers = data[answer_column].unique()
+        answers = data[target].unique()
         probabilities = [
-            sum(data[answer_column] == answer) / len(data[answer_column]) for answer in answers
+            sum(data[target] == answer) / len(data[target]) for answer in answers
         ]
 
         entropy = -sum(p * math.log(p, 2) for p in probabilities)
         return entropy
 
 
-    def _info_gain(self, data, feature, answer_column):
+    def _info_gain(self, data, feature, target):
         """
         Calculate the information gain based on entropy.
 
         Args:
             data (DataFrame): The input DataFrame.
             feature (str): The feature to calculate information gain for.
-            answer_column (str): The column in the DataFrame to calculate entropy for.
+            target (str): The column in the DataFrame to calculate entropy for.
 
         Returns:
             float: The calculated information gain.
         """
         unique_values = np.unique(data[feature])
-        gain = self._calculate_entropy(data, answer_column)
+        gain = self._calculate_entropy(data, target)
         
         for value in unique_values:
             sub_data = data[data[feature] == value]
-            sub_entropy = self._calculate_entropy(sub_data, answer_column)
+            sub_entropy = self._calculate_entropy(sub_data, target)
             gain -= (len(sub_data) / len(data)) * sub_entropy
 
         return gain
 
 
-    def _id3(self, data, features, answer_column):
+    def _id3(self, data, features, target):
         """
         Implement the ID3 algorithm for decision tree learning.
 
         Args:
             data (DataFrame): The input DataFrame.
             features (List[str]): List of features in the DataFrame.
-            answer_column (str): The target variable column.
+            target (str): The target variable column.
 
         Returns:
             Node: Root of the constructed decision tree.
         """
         # Get unique answers
-        answers = data[answer_column].unique()
+        answers = data[target].unique()
 
         # Create root node
         root = Node()
@@ -90,7 +91,7 @@ class ID3DecisionTreeClassifier:
         max_gain = 0
         max_feature = ''
         for feature in features:
-            gain = self._info_gain(data, feature, answer_column)
+            gain = self._info_gain(data, feature, target)
             if gain > max_gain:
                 max_gain = gain
                 max_feature = feature
@@ -100,9 +101,9 @@ class ID3DecisionTreeClassifier:
         # If no information gain, create an uncertain leaf node
         if max_gain == 0:
             root.is_leaf = True
-            root.answer_column = answer_column
+            root.target = target
             for answer in answers:
-                count = sum(data[answer_column]==answer)
+                count = sum(data[target]==answer)
                 root.answers_count[answer] = count
             return root
 
@@ -113,12 +114,12 @@ class ID3DecisionTreeClassifier:
                 sub_data = data[data[max_feature] == value]
                 
                 # If entropy is zero, create a leaf node
-                if self._calculate_entropy(sub_data, answer_column) == 0.0:
+                if self._calculate_entropy(sub_data, target) == 0.0:
                     new_node = Node()
                     new_node.is_leaf = True
                     new_node.value = value
-                    new_node.prediction = np.unique(sub_data[answer_column])
-                    new_node.answer_column = answer_column
+                    new_node.prediction = np.unique(sub_data[target])
+                    new_node.target = target
                     new_node.prediction_id = np.where(np.sort(answers)==new_node.prediction[0])[0][0]
                     root.children.append(new_node)
                 else:
@@ -127,30 +128,30 @@ class ID3DecisionTreeClassifier:
                     dummy_node.value = value
                     new_features = features.copy()
                     new_features.remove(max_feature)
-                    child = self._id3(sub_data, new_features, answer_column)
+                    child = self._id3(sub_data, new_features, target)
                     dummy_node.children.append(child)
-                    dummy_node.answer_column = answer_column
-                    answers = data[answer_column].unique()
+                    dummy_node.target = target
+                    answers = data[target].unique()
                     for answer in answers:
-                        count = sum(sub_data[answer_column]==answer)
+                        count = sum(sub_data[target]==answer)
                         dummy_node.answers_count[answer] = count
                     root.children.append(dummy_node)
             
         return root
 
-    def fit(self, data, answer_column):
+    def fit(self, X, y):
         """
         Train the decision tree model.
 
         Args:
-            data (DataFrame): The DataFrame to train on.
-            answer_column (str): The name of the target variable column.
+            X (DataFrame): The DataFrame of features to train on.
+            y (Series): The target variable.
 
         Returns:
             self: Returns an instance of the fitted model.
         """
-        data, features = self._preprocess_data(data, answer_column)
-        self.root = self._id3(data, features, answer_column)
+        data, features = self._preprocess_data(X, y)
+        self.root = self._id3(data, features, y.name)
         return self
 
 
@@ -234,7 +235,7 @@ class ID3DecisionTreeClassifier:
             if root.prediction:
                 ans_color = ans_colors[root.prediction_id % len(ans_colors)]
                 print(" -> ", f'{BOLD}{UNDERLINE}{ans_color[0]}{ans_color[1]}'
-                    f'[{root.answer_column}: {root.prediction[0]}]{RESET_ALL}')
+                    f'[{root.target}: {root.prediction[0]}]{RESET_ALL}')
             else:  # Uncertain leaf
                 print(" -> ", f'{BOLD}{UNDERLINE}{FORE_WHITE}{BACK_BLACK}Uncertain '
                     f'{dict(sorted(root.answers_count.items()))}{RESET_ALL}')
