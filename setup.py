@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='easyID3',
-    version='0.1.1',
+    version='0.1.2',
     packages=find_packages(),
     description='Implementation of the original ID3 algorithm in Python.',
     author='Jonathan',
