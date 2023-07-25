@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: easyID3
+Version: 0.1.5
+Summary: Implementation of the original ID3 algorithm in Python.
+Home-page: https://github.com/asparagusbeef/easyID3
+Author: Jonathan
+License-File: LICENSE

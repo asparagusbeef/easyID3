@@ -1,0 +1,11 @@
+LICENSE
+README.md
+setup.py
+easyID3/__init__.py
+easyID3/node.py
+easyID3/tree.py
+easyID3.egg-info/PKG-INFO
+easyID3.egg-info/SOURCES.txt
+easyID3.egg-info/dependency_links.txt
+easyID3.egg-info/requires.txt
+easyID3.egg-info/top_level.txt
