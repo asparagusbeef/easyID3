@@ -1,13 +1,15 @@
 # easyID3
-Simple and easy to use ID3 tree build and print
+Python implementation of the original ID3 algorithm by Ross Quinlan. Works only on categorical data, and outputs a leaf only at perfect homogenouity. 
 
-Utilizes pandas, math and numpy.
-Easy textual print of categorical-only ID3 decision tree adjusted for any number of answers.
-will clean data of perfectly unique columns (such as an index column).
+```
+import pandas as pd
+from easyID3 import ID3DecisionTreeClassifier
 
-example code:
+df = pd.read_csv('my_categorical_data.csv')
+tree = ID3DecisionTreeClassifier()
+tree.fit(df)
+tree.predict(df)
+tree.print_tree()
+```
 
-tree = ID3(df, "Purchased?")
-printTree(tree)
 
-As of now there are four rotating colors for middle nodes (cyan magenta blue yellow) and two (red and green) for the final nodes. \ future release will include functions for controlling the print color scheme.
